@@ -23,6 +23,7 @@ class Db:
             _health = "Not Healthy"
         
         _cursorList = []
+        self._sqlSetup()
 
 
     def runQuery(self, query: str, params: tuple[str]):
@@ -67,3 +68,24 @@ class Db:
             Returns: Either 'Healthy' or 'Not Healthy
         """
         return self._health
+
+    def _sqlSetup(self):
+        try:
+            if self._health != "Healthy":
+                raise Exception("Db connection is not healthy.")
+            
+            cursor = self._dbconn.cursor()
+
+            script_list = ['./scripts' + name for name in 
+                                ['init_types.sql', 'init_tables.sql', 'init_relationships.sql']]
+            
+            for script_name in script_list:
+                with open(script_name) as f:
+                    script = f.read()
+                
+                cursor.execute()
+                self._dbconn.commit()
+
+        except Exception as e:
+            print(f"SQL Setup went wrong:\n\t{e}\n", file=sys.stderr)
+            cursor.close()
