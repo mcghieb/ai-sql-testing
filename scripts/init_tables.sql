@@ -67,13 +67,11 @@ CREATE TABLE IF NOT EXISTS public.person_race (
   PRIMARY KEY (person_id, race_id)
 );
 
-
-
-CREATE INDEX idx_p_contact_info_id ON public.person (contact_info_id);
-CREATE INDEX idx_pe_person_id ON public.person_event (person_id);
-CREATE INDEX idx_pe_event_id ON public.person_event (event_id);
-CREATE INDEX idx_e_coordinator_id ON public.event (coordinator_id);
-CREATE INDEX idx_e_contact_info_id ON public.event (contact_info_id);
-CREATE INDEX idx_r_event_id ON public.race (event_id);
-CREATE INDEX idx_pr_person_id ON public.person_race (person_id);
-CREATE INDEX idx_pr_race_id ON public.person_race (race_id);
+CREATE INDEX IF NOT EXISTS idx_p_contact_info_id ON public.person (contact_info_id);
+CREATE INDEX IF NOT EXISTS idx_pe_person_id ON public.person_event (person_id);
+CREATE INDEX IF NOT EXISTS idx_pe_event_id ON public.person_event (event_id);
+CREATE INDEX IF NOT EXISTS idx_e_coordinator_id ON public.event (coordinator_id);
+CREATE INDEX IF NOT EXISTS idx_e_contact_info_id ON public.event (contact_info_id);
+CREATE INDEX IF NOT EXISTS idx_r_event_id ON public.race (event_id);
+CREATE INDEX IF NOT EXISTS idx_pr_person_id ON public.person_race (person_id);
+CREATE INDEX IF NOT EXISTS idx_pr_race_id ON public.person_race (race_id);

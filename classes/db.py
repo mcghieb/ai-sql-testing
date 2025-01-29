@@ -6,23 +6,17 @@ class Db:
         This is the database control class.
     """
     
-    def __init__(self, dbname, user, password, host, port):
-        _connparams = {
-            "dbname": dbname,
-            "user": user,
-            "password": password,
-            "host": host,
-            "port": port
-        }
-        
+    def __init__(self, connstr):
+        self._cursorList = []
+
         try:
-            _dbconn = psycopg2.connect(**_connparams)
-            _health = "Healthy"
+            self._dbconn = psycopg2.connect(connstr)
+            self._health = "Healthy"
         except Exception as e:
             print(f"Database connection not made.\n\t{e}\n", file=sys.stderr)
-            _health = "Not Healthy"
-        
-        _cursorList = []
+            self._health = "Not Healthy"
+            return
+
         self._sqlSetup()
 
 
@@ -56,8 +50,10 @@ class Db:
         """
             This function is for closing all connections (db and cursors).
         """
-        for cursor in self._cursorList:
-            cursor.close()
+
+        if self._cursorList:
+            for cursor in self._cursorList:
+                cursor.close()
 
         self._dbconn.close()
 
@@ -73,17 +69,17 @@ class Db:
         try:
             if self._health != "Healthy":
                 raise Exception("Db connection is not healthy.")
-            
+
             cursor = self._dbconn.cursor()
 
-            script_list = ['./scripts' + name for name in 
+            script_list = ['./scripts/' + name for name in 
                                 ['init_types.sql', 'init_tables.sql', 'init_relationships.sql']]
-            
+
             for script_name in script_list:
                 with open(script_name) as f:
                     script = f.read()
-                
-                cursor.execute()
+
+                cursor.execute(script)
                 self._dbconn.commit()
 
         except Exception as e:
