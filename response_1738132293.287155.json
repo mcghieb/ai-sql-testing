@@ -1,0 +1,65 @@
+[
+  {
+    "question": "How many people attended more than 3 races within a year?",
+    "sql": "\nSELECT p.person_id, COUNT(pr.race_id) AS race_count, EXTRACT(YEAR FROM r.start_date) AS year\nFROM public.person p\nJOIN public.person_race pr ON p.person_id = pr.person_id\nJOIN public.race r ON pr.race_id = r.race_id\nGROUP BY p.person_id, year\nHAVING COUNT(pr.race_id) > 3;\n",
+    "queryRawResponse": "[]",
+    "friendlyResponse": "It looks like no one attended more than 3 races in a year, which means there were zero individuals who met that criteria.",
+    "error": "None"
+  },
+  {
+    "question": "Which event had the most people from the same area code?",
+    "sql": "\nWITH AreaCodeCounts AS (\n    SELECT \n        e.event_id,\n        SUBSTRING(ci.phone FROM 1 FOR 3) AS area_code, -- Assuming US area code is the first 3 digits\n        COUNT(DISTINCT pe.person_id) AS participant_count\n    FROM \n        public.event e\n    JOIN \n        public.contact_info ci ON e.contact_info_id = ci.contact_info_id\n    JOIN \n        public.person_event pe ON e.event_id = pe.event_id\n    GROUP BY \n        e.event_id, area_code\n),\nMaxAreaCodeCounts AS (\n    SELECT \n        event_id, \n        area_code, \n        participant_count,\n        RANK() OVER (PARTITION BY event_id ORDER BY participant_count DESC) as rank_within_event\n    FROM \n        AreaCodeCounts\n)\nSELECT \n    event_id, \n    area_code, \n    participant_count\nFROM \n    MaxAreaCodeCounts\nWHERE \n    rank_within_event = 1\nORDER BY \n    participant_count DESC\nLIMIT 1;\n",
+    "queryRawResponse": "[(1, '123', 3)]",
+    "friendlyResponse": "The event had the highest number of attendees from the same area code, with 3 people coming from area code '123'.",
+    "error": "None"
+  },
+  {
+    "question": "How many people registered for events using this tool?",
+    "sql": "\nSELECT COUNT(DISTINCT person_id) AS total_registered_people\nFROM public.person_event;\n",
+    "queryRawResponse": "[(10,)]",
+    "friendlyResponse": "A total of 10 people registered for events using this tool.",
+    "error": "None"
+  },
+  {
+    "question": "What area code is the person who coordinated the most events in 2024 from?",
+    "sql": "\nSELECT ci.phone\nFROM public.event e\nJOIN public.person p ON e.coordinator_id = p.person_id\nJOIN public.contact_info ci ON p.contact_info_id = ci.contact_info_id\nWHERE EXTRACT(YEAR FROM e.start_date) = 2024\nGROUP BY e.coordinator_id, ci.phone\nORDER BY COUNT(e.event_id) DESC\nLIMIT 1;\n",
+    "queryRawResponse": "[]",
+    "friendlyResponse": "It seems that we don't have any information available about the area code of the person who coordinated the most events in 2024. The response is simply an empty set, indicating that no data was found.",
+    "error": "None"
+  },
+  {
+    "question": "How many people outside of TX use this tool?",
+    "sql": "\nSELECT COUNT(*) AS num_people_outside_tx\nFROM public.person p\nJOIN public.contact_info ci ON p.contact_info_id = ci.contact_info_id\nJOIN public.address a ON ci.address_id = a.address_id\nWHERE a.state <> 'TX';\n",
+    "queryRawResponse": "[(9,)]",
+    "friendlyResponse": "The response indicates that there are 9 people outside of Texas using this tool.",
+    "error": "None"
+  },
+  {
+    "question": "How many races were held outside of the WA?",
+    "sql": "\nSELECT COUNT(*) AS race_count\nFROM public.race r\nJOIN public.event e ON r.event_id = e.event_id\nWHERE e.event_location NOT LIKE '%WA%';\n",
+    "queryRawResponse": "[(4,)]",
+    "friendlyResponse": "A total of 4 races were held outside of the WA.",
+    "error": "None"
+  },
+  {
+    "question": "Which person hosting races had the most number of people attending?",
+    "sql": "\nSELECT p.first_name, p.last_name, COUNT(pr.person_id) AS attendee_count\nFROM public.person AS p\nJOIN public.event AS e ON p.person_id = e.coordinator_id\nJOIN public.race AS r ON e.event_id = r.event_id\nJOIN public.person_race AS pr ON r.race_id = pr.race_id\nGROUP BY p.person_id\nORDER BY attendee_count DESC\nLIMIT 1;\n",
+    "queryRawResponse": "[('John', 'Doe', 6)]",
+    "friendlyResponse": "The data shows that John Doe hosted races that attracted the highest number of attendees, with a total of 6 people attending his events.",
+    "error": "None"
+  },
+  {
+    "question": "Find the emails of every person attending an event that has a camping location so that we can send them a notification.",
+    "sql": "\nSELECT DISTINCT ci.email\nFROM public.person AS p\nJOIN public.contact_info AS ci ON p.contact_info_id = ci.contact_info_id\nJOIN public.person_event AS pe ON p.person_id = pe.person_id\nJOIN public.event AS e ON pe.event_id = e.event_id\nWHERE e.camping_location IS NOT NULL AND e.camping_location <> '';\n",
+    "queryRawResponse": "[('person4@example.com',), ('person8@example.com',), ('person5@example.com',), ('person9@example.com',)]",
+    "friendlyResponse": "Here are the email addresses of people who will be attending the event at a camping location, so we can notify them: \n\n- person4@example.com\n- person8@example.com\n- person5@example.com\n- person9@example.com",
+    "error": "None"
+  },
+  {
+    "question": "What is the name of the person who is currently working on the most events (that are not currently listed on the site).",
+    "sql": "\nSELECT \n    p.first_name, \n    p.last_name, \n    COUNT(e.event_id) AS event_count\nFROM \n    public.event e\nJOIN \n    public.person p ON e.coordinator_id = p.person_id\nWHERE \n    e.post_status = 'UNLISTED'  -- Replace 'UNLISTED' with the actual constant used in your schema for unlisted events\nGROUP BY \n    p.person_id\nORDER BY \n    event_count DESC\nLIMIT 1;\n",
+    "queryRawResponse": "None",
+    "friendlyResponse": "It seems that there is no one currently working on events that aren't listed on the site.",
+    "error": "None"
+  }
+]

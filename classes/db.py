@@ -19,8 +19,7 @@ class Db:
 
         self._sqlSetup()
 
-
-    def runQuery(self, query: str, params: tuple[str]):
+    def runQuery(self, query: str, params=None):
         """
             This function is used to run queries on the database.
 
@@ -32,18 +31,18 @@ class Db:
                 raise Exception("Db connection is not healthy.")
             
             cursor = self._dbconn.cursor()
-            self._cursorlist.append(cursor) # Added for later cleanup
+            self._cursorList.append(cursor) # Added for later cleanup
 
             if (params):
                 cursor.execute(query, params) # This is to avoid sql injection
+                return cursor.fetchall()
             else:
                 cursor.execute(query)
+                return cursor.fetchall()
 
-            self._dbconn.commit()
-
-            return cursor.fetchall()
         except Exception as e:
             print(f"An error occured in 'runQuery()':\n\t{e}\n", file=sys.stderr)
+            cursor.execute("ROLLBACK")
             cursor.close()
 
     def cleanUp(self):
@@ -73,7 +72,8 @@ class Db:
             cursor = self._dbconn.cursor()
 
             script_list = ['./scripts/' + name for name in 
-                                ['init_types.sql', 'init_tables.sql', 'init_relationships.sql']]
+                                ['delete_db.sql', 'init_types.sql', 'init_tables.sql',
+                                 'init_relationships.sql', 'init_data.sql']]
 
             for script_name in script_list:
                 with open(script_name) as f:
