@@ -24,7 +24,7 @@ queryRawResponse = [(9,)]
 The response indicates that there are 9 people outside of Texas using this tool.
 ```
 
-> The only queries that had 'failing' data returns were due to me not having enough test data.
+> The only queries that had 'failing' data returns were due to me not having enough test data to perform complex queries.
 > With so many foreign keys it got pretty tedious trying to add more data, and for some reason ChatGPT
 > would not generate me any more data no matter what I tried.
 
